@@ -21,6 +21,6 @@ fi
 GIT_CONFIG_FILE=`convert_path "$CUR_DIR/git.config"`
 
 if ! grep -Exq "\s*path ?= ?$GIT_CONFIG_FILE" ~/.gitconfig; then
-    git config --global --add includes.path "$GIT_CONFIG_FILE"
+    git config --global --add include.path "$GIT_CONFIG_FILE"
 fi
 
