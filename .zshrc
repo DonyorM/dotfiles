@@ -77,7 +77,7 @@ ZSH_THEME="powerlevel10k/powerlevel10k"
 # Custom plugins may be added to $ZSH_CUSTOM/plugins/
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
-plugins=(git)
+plugins=(git z) # If editing this isn't work check ~/.zsh-custom, it may be overridden if we need machine specific plugins
 
 source $ZSH/oh-my-zsh.sh
 
@@ -110,4 +110,10 @@ source $ZSH/oh-my-zsh.sh
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 
-source ~/.zsh-custom
+[[ ! -f ~/.zsh-custom ]] || source ~/.zsh-custom
+
+if command -v pyenv 1>/dev/null 2>&1; then
+  eval "$(pyenv init -)"
+fi
+
+PATH="$(pyenv root)/shims:$HOME/.local/bin:$PATH"

@@ -38,7 +38,7 @@ if which zsh; then
         git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k
     fi
 
-    ZSHRC_FILE=". $CUR_DIR/.zshrc"
+    ZSHRC_FILE="$CUR_DIR/.zshrc"
     if [[ `readlink ~/.zshrc` != "$ZSHRC_FILE" ]]; then
         mv ~/.zshrc ~/.zshrc.setup.bak || true
         ln -s "$ZSHRC_FILE" ~/.zshrc
