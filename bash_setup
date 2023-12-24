@@ -136,3 +136,7 @@ ex ()
 export VISUAL=vim
 export EDITOR="$VISUAL"
 set -o vi
+
+if [ -e '/usr/share/git/completion/git-prompt.sh' ]; then
+	. /usr/share/git/completion/git-prompt.sh
+fi
