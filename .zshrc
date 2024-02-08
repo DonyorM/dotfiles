@@ -117,3 +117,11 @@ if command -v pyenv 1>/dev/null 2>&1; then
 fi
 
 PATH="$(pyenv root)/shims:$HOME/.local/bin:$PATH"
+. ~/.zfunc/tiai-sourcing.zsh
+
+_bb_tasks() {
+    local matches=(`bb tasks |tail -n +3 |cut -f1 -d ' '`)
+    compadd -a matches
+    _files # autocomplete filenames as well
+}
+compdef _bb_tasks bb
