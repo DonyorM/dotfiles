@@ -112,13 +112,6 @@ source $ZSH/oh-my-zsh.sh
 
 [[ ! -f ~/.zsh-custom ]] || source ~/.zsh-custom
 
-if command -v pyenv 1>/dev/null 2>&1; then
-  eval "$(pyenv init -)"
-fi
-
-PATH="$(pyenv root)/shims:$HOME/.local/bin:$PATH"
-. ~/.zfunc/tiai-sourcing.zsh
-
 _bb_tasks() {
     local matches=(`bb tasks |tail -n +3 |cut -f1 -d ' '`)
     compadd -a matches

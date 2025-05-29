@@ -44,6 +44,12 @@ if which zsh; then
         ln -s "$ZSHRC_FILE" ~/.zshrc
     fi
 
+    P10K_FILE="$CUR_DIR/.p10k.zsh"
+    if [[ `readlink ~/.p10k` != "$P10K_FILE" ]]; then
+        mv ~/.p10k.zsh ~/.p10k.zsh.bak || true
+        ln -s "$P10K_FILE" ~/.p10k.zsh
+    fi
+
     echo -e "${BLUE}Machine specific zsh configuration goes in ~/.zsh-custom${NC}"
 fi
 
