@@ -120,3 +120,13 @@ _bb_tasks() {
     _files # autocomplete filenames as well
 }
 compdef _bb_tasks bb
+git-with-key() {
+  if [[ "$1" == "-h" ]]; then
+    echo "The first parameter should be the path to the SSH key to use with this git command. The rest of the parameters are passed directly to git.
+
+  Usage: git-with-key [path/to/key] [...git args]
+  Example: git-with-key ~/.ssh/private_github push origin main"
+    return
+  fi
+  GIT_SSH_COMMAND="ssh -i $1" git "${@:2}"
+}

@@ -19,8 +19,8 @@ ln -s "$CUR_DIR/.tmux.conf"  ~/.tmux.conf
 ln -s "$CUR_DIR/.vimrc" ~/.vimrc
 BASH_SETUP_FILE=". $CUR_DIR/bash_setup"
 
-if ! grep -Fxq "$BASH_SETUP_FILE" ~/.bash_profile; then
-    echo "$BASH_SETUP_FILE" >> ~/.bash_profile
+if ! grep -Fxq "$BASH_SETUP_FILE" ~/.bashrc; then
+    echo "$BASH_SETUP_FILE" >> ~/.bashrc
 fi
 
 GIT_CONFIG_FILE=`convert_path "$CUR_DIR/git.config"`
