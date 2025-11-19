@@ -21,6 +21,46 @@ convert_path() {
     fi
 }
 
+get_config_home() {
+    local config_home=""
+
+    if is_windows; then
+        if [ -n "$APPDATA" ]; then
+            config_home="$APPDATA"
+        elif command_exists powershell.exe; then
+            config_home="$(powershell.exe -NoProfile -Command "[Environment]::GetFolderPath('ApplicationData')" 2>/dev/null | tr -d '\r')"
+        else
+            config_home="$HOME/AppData/Roaming"
+        fi
+
+        if command_exists cygpath; then
+            config_home="$(cygpath -u "$config_home")"
+        else
+            local normalized
+            normalized="$(printf '%s' "$config_home" | sed 's#\\#/#g')"
+            if [[ "$normalized" =~ ^([A-Za-z]):(.*)$ ]]; then
+                local drive="${BASH_REMATCH[1]}"
+                drive="$(printf '%s' "$drive" | tr '[:upper:]' '[:lower:]')"
+                local rest="${BASH_REMATCH[2]}"
+                normalized="/${drive}${rest}"
+            fi
+            config_home="$normalized"
+        fi
+    else
+        if [ -n "$XDG_CONFIG_HOME" ]; then
+            config_home="$XDG_CONFIG_HOME"
+        else
+            config_home="$HOME/.config"
+        fi
+    fi
+
+    if [ -z "$config_home" ]; then
+        config_home="$HOME/.config"
+    fi
+
+    echo "$config_home"
+}
+
 show_identity_banner() {
     local message_lines=(
         "Let's configure your Git and jj identity."
@@ -184,9 +224,20 @@ fi
 
 if command_exists jj; then
     jj config set --user ui.editor vim
+
+    JJ_CONFIG_SOURCE="$CUR_DIR/jj-config.toml"
+    if [ -f "$JJ_CONFIG_SOURCE" ]; then
+        JJ_CONF_DIR="$(get_config_home)/jj/conf.d"
+        mkdir -p "$JJ_CONF_DIR"
+        JJ_TARGET="$JJ_CONF_DIR/$(basename "$JJ_CONFIG_SOURCE")"
+        if [ -e "$JJ_TARGET" ] && [ ! -L "$JJ_TARGET" ]; then
+            mv "$JJ_TARGET" "$JJ_TARGET.$(date +%s).bak"
+        fi
+        ln -sfn "$JJ_CONFIG_SOURCE" "$JJ_TARGET"
+    fi
 else
-    echo -e "${BLUE}git not found. Skipping git config include path setup.${NC}"
-fi   
+    echo -e "${BLUE}jj not found. Skipping jj config setup.${NC}"
+fi
 
 configure_vcs_identity
 

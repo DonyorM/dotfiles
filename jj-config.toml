@@ -3,3 +3,9 @@
 
 [aliases]
 tug = ["bookmark", "move", "--from", "closest_bookmark(@-)", "--to", "@-"]
+tp = ["util", "exec", "--", "bash", "-c", "jj tug && jj git push"]
+bp = ["util", "exec", "--", "bash", "-c", "jj bookmark c -r @- \"$1\" && jj git push --allow-new", ""]
+recent = ["bookmark", "list", "--sort", "committer-date-"]
+
+[ui]
+default-command = "log"
