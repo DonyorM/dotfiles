@@ -9,8 +9,12 @@ command_exists() {
     command -v "$1" >/dev/null 2>&1
 }
 
+is_windows() {
+    [ "$OSTYPE" = "msys" ]
+}
+
 convert_path() {
-    if [ "$OSTYPE" = "msys" ]; then
+    if is_windows; then
         echo "${1/\/c\//C:\/}"
     else
         echo "$1"
