@@ -130,3 +130,7 @@ git-with-key() {
   fi
   GIT_SSH_COMMAND="ssh -i $1" git "${@:2}"
 }
+
+if (( $+commands[jj] )); then
+	source <(COMPLETE=zsh jj)
+fi

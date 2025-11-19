@@ -2,14 +2,159 @@
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
-BLUE='\033[0;34m' 
+BLUE='\033[0;34m'
 NC='\033[0m'
+
+command_exists() {
+    command -v "$1" >/dev/null 2>&1
+}
 
 convert_path() {
     if [ "$OSTYPE" = "msys" ]; then
         echo "${1/\/c\//C:\/}"
     else
         echo "$1"
+    fi
+}
+
+show_identity_banner() {
+    local message_lines=(
+        "Let's configure your Git and jj identity."
+        "These defaults are stored globally for future commits."
+    )
+
+    if command_exists gum; then
+        gum style \
+            --border rounded \
+            --margin "1 0" \
+            --padding "1 2" \
+            --border-foreground 212 \
+            "${message_lines[@]}"
+    else
+        local border="============================================================"
+        echo "$border"
+        for line in "${message_lines[@]}"; do
+            echo "  $line"
+        done
+        echo "$border"
+    fi
+}
+
+prompt_identity_field() {
+    local label="$1"
+    local placeholder="$2"
+    local default_value="$3"
+    local value=""
+
+    while [ -z "$value" ]; do
+        if command_exists gum; then
+            local gum_cmd=(gum input --prompt "$label: ")
+            if [ -n "$placeholder" ]; then
+                gum_cmd+=(--placeholder "$placeholder")
+            fi
+            if [ -n "$default_value" ]; then
+                gum_cmd+=(--value "$default_value")
+            fi
+            value="$("${gum_cmd[@]}")"
+        else
+            if [ -n "$default_value" ]; then
+                read -r -p "$label [$default_value]: " value
+                value="${value:-$default_value}"
+            else
+                read -r -p "$label: " value
+            fi
+        fi
+
+        value="$(printf '%s' "$value" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
+
+        if [ -z "$value" ]; then
+            echo -e "${RED}$label cannot be empty. Please try again.${NC}"
+        fi
+    done
+
+    echo "$value"
+}
+
+configure_vcs_identity() {
+    local git_available=0
+    local jj_available=0
+    local git_name=""
+    local git_email=""
+    local jj_name=""
+    local jj_email=""
+
+    if command_exists git; then
+        git_available=1
+        git_name="$(git config --global user.name 2>/dev/null || true)"
+        git_email="$(git config --global user.email 2>/dev/null || true)"
+    fi
+
+    if command_exists jj; then
+        jj_available=1
+        jj_name="$(jj config get user.name 2>/dev/null || true)"
+        jj_email="$(jj config get user.email 2>/dev/null || true)"
+    fi
+
+    if [ "$git_available" -eq 0 ] && [ "$jj_available" -eq 0 ]; then
+        return
+    fi
+
+    local needs_name_prompt=0
+    local needs_email_prompt=0
+
+    if [ "$git_available" -eq 1 ] && [ -z "$git_name" ]; then
+        needs_name_prompt=1
+    fi
+    if [ "$jj_available" -eq 1 ] && [ -z "$jj_name" ]; then
+        needs_name_prompt=1
+    fi
+    if [ "$git_available" -eq 1 ] && [ -z "$git_email" ]; then
+        needs_email_prompt=1
+    fi
+    if [ "$jj_available" -eq 1 ] && [ -z "$jj_email" ]; then
+        needs_email_prompt=1
+    fi
+
+    local configured_name="$git_name"
+    if [ -z "$configured_name" ]; then
+        configured_name="$jj_name"
+    fi
+
+    local configured_email="$git_email"
+    if [ -z "$configured_email" ]; then
+        configured_email="$jj_email"
+    fi
+
+    if [ "$needs_name_prompt" -eq 1 ] || [ "$needs_email_prompt" -eq 1 ]; then
+        show_identity_banner
+        if [ "$needs_name_prompt" -eq 1 ]; then
+            configured_name="$(prompt_identity_field "Full Name" "Daniel Manila" "$configured_name")"
+        fi
+        if [ "$needs_email_prompt" -eq 1 ]; then
+            configured_email="$(prompt_identity_field "Email Address" "ada@example.com" "$configured_email")"
+        fi
+    fi
+
+    if [ "$git_available" -eq 1 ]; then
+        if [ -z "$git_name" ] && [ -n "$configured_name" ]; then
+            git config --global user.name "$configured_name"
+            echo -e "${GREEN}Configured git user.name${NC}"
+        fi
+        if [ -z "$git_email" ] && [ -n "$configured_email" ]; then
+            git config --global user.email "$configured_email"
+            echo -e "${GREEN}Configured git user.email${NC}"
+        fi
+    fi
+
+    if [ "$jj_available" -eq 1 ]; then
+        if [ -z "$jj_name" ] && [ -n "$configured_name" ]; then
+            jj config set --user user.name "$configured_name"
+            echo -e "${GREEN}Configured jj user.name${NC}"
+        fi
+        if [ -z "$jj_email" ] && [ -n "$configured_email" ]; then
+            jj config set --user user.email "$configured_email"
+            echo -e "${GREEN}Configured jj user.email${NC}"
+        fi
     fi
 }
 
@@ -25,11 +170,23 @@ fi
 
 GIT_CONFIG_FILE=`convert_path "$CUR_DIR/git.config"`
 
-if ! grep -Exq "\s*path ?= ?$GIT_CONFIG_FILE" ~/.gitconfig; then
-    git config --global --add include.path "$GIT_CONFIG_FILE"
+if command_exists git; then
+    if ! grep -Exq "\s*path ?= ?$GIT_CONFIG_FILE" ~/.gitconfig 2>/dev/null; then
+        git config --global --add include.path "$GIT_CONFIG_FILE"
+    fi
+else
+    echo -e "${BLUE}git not found. Skipping git config include path setup.${NC}"
 fi
 
-if which zsh; then
+if command_exists jj; then
+    jj config set --user ui.editor vim
+else
+    echo -e "${BLUE}git not found. Skipping git config include path setup.${NC}"
+fi   
+
+configure_vcs_identity
+
+if command_exists zsh; then
     if [ ! -d ~/.oh-my-zsh ]; then
         sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
     fi

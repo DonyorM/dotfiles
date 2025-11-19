@@ -137,6 +137,10 @@ ex ()
   fi
 }
 
+if command -v jj >/dev/null 2>&1; then
+	source <(COMPLETE=bash jj)
+fi
+
 export VISUAL=vim
 export EDITOR="$VISUAL"
 set -o vi
